@@ -10,17 +10,14 @@ from kivy.uix.image import Image
 from kivy.clock import Clock
 
 from datetime import datetime
-# from motor import *
-
-
-folder = "images-gif/"
-
 
 # This class uses the BoxLayout to make the orientation 
 # either horizontal or vertical
 class MainScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # self.manager.get_screen("Set Time").ids.text_input.text = "new text"
+        self.feedingTime = ""
         self.layout = BoxLayout(orientation='horizontal')
 
         self.button_weight = Button(
@@ -41,14 +38,17 @@ class MainScreen(Screen):
 
         self.add_widget(self.layout)
 
-        # set up scheduled interval for checking time
         Clock.schedule_interval(lambda dt: self.checkTime(SetTime.feedTime), 1)
 
+    # def on_enter(self):
+    #     # Get the stored text input from the app class and display it
+    #     self.ids.stored_text_label.text = self.parent.text_input
+
     #checks the current real world time
-    def checkTime(self, feedTime):
-        currentTime = datetime.now().strftime("%I:%M:%S %p")
-        print(f"{currentTime} current \n{feedTime} feeding time")
-        if (feedTime == currentTime):
+    def checkTime(self, feedingTime):
+        currentTime = datetime.now().strftime("%I:%M %p")
+        print(f"{currentTime} current \n{feedingTime} feeding time")
+        if (feedingTime == currentTime):
             print("hello world")
 
     # These on click functions basically calls for the Weight_Time function to switch screens
@@ -63,8 +63,6 @@ class MainScreen(Screen):
     
 
 class SetTime(Screen):
-    feedTime = ""
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # Create the GUI layout using a BoxLayout
@@ -91,6 +89,8 @@ class SetTime(Screen):
 
         self.add_widget(layout)
 
+        self.feedTime = None
+
     def on_button_press(self, button):
         if button.text == "clear":
             self.display.text = ""
@@ -99,12 +99,9 @@ class SetTime(Screen):
         elif button.text == "enter":
             try:
                 self.feedTime = str(self.display.text)
-                print(self.feedTime + "feed in class time")
-                if len(self.feedTime) > 14:
-                    self.display.text = self.feedTime[:11] + "..."
-                else:
-                    self.display.text = self.feedTime
+                self.display.text = self.feedTime
                 # switch back to MainScreen if the result is valid
+                feedingTime = self.feedTime
                 app = App.get_running_app()
                 app.sm.current = "MainScreen"
             except:
@@ -114,13 +111,9 @@ class SetTime(Screen):
                 self.display.text = ""
             self.display.text += button.text
 
-    def update_feedTime(self):
-        self.feedTime = self.display.text
 
 
 class Set_Weight(Screen):
-    refillWeightLimit = ""
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # create the GUI layout
