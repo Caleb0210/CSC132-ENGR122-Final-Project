@@ -15,7 +15,6 @@ from datetime import datetime
 
 folder = "images-gif/"
 
-
 # This class uses the BoxLayout to make the orientation 
 # either horizontal or vertical
 class MainScreen(Screen):
@@ -25,7 +24,7 @@ class MainScreen(Screen):
 
         self.button_weight = Button(
             text="Set Weight",
-            background_color="red"  
+            background_color="blue"  
         )
 
         self.button_weight.bind(on_press=self.on_button_weight_click) # type: ignore
@@ -33,7 +32,7 @@ class MainScreen(Screen):
 
         self.button_time = Button(
             text="Set Time",
-            background_color="red" 
+            background_color="blue" 
         )
         
         self.button_time.bind(on_press=self.on_button_time_click) # type: ignore
@@ -41,14 +40,22 @@ class MainScreen(Screen):
 
         self.add_widget(self.layout)
 
-        # set up scheduled interval for checking time
+        Clock.schedule_interval(lambda dt: self.checkTime(SetTime.feedTime), 1)
+
+    def time(self, feedTime, n_time):
+        feedTime = datetime.combine(feedTime.date(), n_time)
+        delay = (feedTime - datetime.now()).total_seconds()
+
+        # Clock.schedule_interval(self.checkTime, delay)
         Clock.schedule_interval(lambda dt: self.checkTime(SetTime.feedTime), 1)
 
     #checks the current real world time
     def checkTime(self, feedTime):
-        currentTime = datetime.now().strftime("%I:%M:%S %p")
-        print(f"{currentTime} current \n{feedTime} feeding time")
-        if (feedTime == currentTime):
+        currentTime = datetime.now().strftime("%I:%M %p")
+        # strFeedTime = feedTime.strftime("%I:%M %p")
+        print(f"'{currentTime}' current \n'{feedTime}' feeding time")
+        if (not SetTime.hasFed and feedTime == currentTime):
+            SetTime.hasFed = True
             print("hello world")
 
     # These on click functions basically calls for the Weight_Time function to switch screens
@@ -64,6 +71,7 @@ class MainScreen(Screen):
 
 class SetTime(Screen):
     feedTime = ""
+    hasFed = False
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -71,13 +79,14 @@ class SetTime(Screen):
         layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
         self.display = Label(text="", font_size='30sp', halign="right", valign="bottom", size_hint=(1, 0.5))
         layout.add_widget(self.display)
+        self.answer = False
 
         # Add the buttons to the SetTime layout
         buttons = [
             "7", "8", "9", "back",
             "4", "5", "6", " ",
-            "1", "2", "3", "AM",
-            "0", ":", "enter", "PM"
+            "1", "2", "3", " AM",
+            "0", ":", "enter", " PM"
             ]
         # Create a GridLayout to hold the buttons
         buttons_layout = GridLayout(cols=4, spacing=5)
@@ -98,24 +107,27 @@ class SetTime(Screen):
             self.display.text = self.display.text[:-1]
         elif button.text == "enter":
             try:
-                self.feedTime = str(self.display.text)
-                print(self.feedTime + "feed in class time")
-                if len(self.feedTime) > 14:
-                    self.display.text = self.feedTime[:11] + "..."
+                SetTime.feedTime = str(self.display.text).strip()
+                self.answer = True
+                print(SetTime.feedTime + " feed time")
+                if len(SetTime.feedTime) > 14:
+                    self.display.text = SetTime.feedTime[:11] + "..."
                 else:
-                    self.display.text = self.feedTime
+                    self.display.text = SetTime.feedTime
                 # switch back to MainScreen if the result is valid
+                SetTime.hasFed = False
                 app = App.get_running_app()
                 app.sm.current = "MainScreen"
             except:
                 self.display.text = "ERROR131"
         else:
-            if self.display.text == "ERROR131":
+            if self.display.text == "ERROR131" or self.answer:
                 self.display.text = ""
+                self.answer = False
             self.display.text += button.text
 
     def update_feedTime(self):
-        self.feedTime = self.display.text
+        SetTime.feedTime = self.display.text
 
 
 class Set_Weight(Screen):
@@ -132,7 +144,7 @@ class Set_Weight(Screen):
         buttons = [
             '7', '8', '9', 'back',
             '4', '5', '6', 'clear',
-            '1', '2', '3', '',
+            '1', '2', '3', 'g',
             '0', '.', 'enter', '']
         
         # Create a GridLayout to hold the buttons
