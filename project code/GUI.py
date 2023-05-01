@@ -10,8 +10,9 @@ from kivy.uix.image import Image
 from kivy.clock import Clock
 
 from datetime import datetime
+import requests
 # from motor import *
-
+data = {"gearControl", 0}
 
 folder = "images-gif/"
 
@@ -40,23 +41,31 @@ class MainScreen(Screen):
 
         self.add_widget(self.layout)
 
-        Clock.schedule_interval(lambda dt: self.checkTime(SetTime.feedTime), 1)
-
-    def time(self, feedTime, n_time):
-        feedTime = datetime.combine(feedTime.date(), n_time)
-        delay = (feedTime - datetime.now()).total_seconds()
-
-        # Clock.schedule_interval(self.checkTime, delay)
+        Clock.schedule_interval(lambda dt: self.checkWeight(SetWeight.refillWeightLimit), 1)
         Clock.schedule_interval(lambda dt: self.checkTime(SetTime.feedTime), 1)
 
     #checks the current real world time
     def checkTime(self, feedTime):
         currentTime = datetime.now().strftime("%I:%M %p")
-        # strFeedTime = feedTime.strftime("%I:%M %p")
-        print(f"'{currentTime}' current \n'{feedTime}' feeding time")
+        # print(f"'{currentTime}' current \n'{feedTime}' feeding time")
         if (not SetTime.hasFed and feedTime == currentTime):
             SetTime.hasFed = True
-            print("hello world")
+            if(SetWeight.refillWeightLimit <= "weight"):
+                SetWeight.filling = True
+                data = {"gearControl": 1}
+                response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/write.php", params = data)
+                print("feeding now!")
+        if (SetTime.hasFed and feedTime != currentTime):
+            SetTime.hasFed == False
+            
+
+    def checkWeight(self, weightLimit):
+        print(weightLimit)
+        if (not SetWeight.filling and weightLimit == "weight"):
+            SetWeight.filling = False
+            data = {"gearControl": 2}
+            response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/write.php", params = data)
+            print("closing")
 
     # These on click functions basically calls for the Weight_Time function to switch screens
     def on_button_weight_click(self, instance):
@@ -130,8 +139,9 @@ class SetTime(Screen):
         SetTime.feedTime = self.display.text
 
 
-class Set_Weight(Screen):
+class SetWeight(Screen):
     refillWeightLimit = ""
+    filling = False
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -166,12 +176,13 @@ class Set_Weight(Screen):
             self.display.text = self.display.text[:-1]
         elif button.text == "enter":
             try:
-                self.refillWeightLimit = str(self.display.text)
-                if len(self.refillWeightLimit) > 14:
-                    self.display.text = self.refillWeightLimit[:11] + "..."
+                SetWeight.refillWeightLimit = str(self.display.text)
+                if len(SetWeight.refillWeightLimit) > 14:
+                    self.display.text = SetWeight.refillWeightLimit[:11] + "..."
                 else:
-                    self.display.text = self.refillWeightLimit
+                    self.display.text = SetWeight.refillWeightLimit
                 # switch back to MainScreen if the result is valid
+                SetWeight.filling = False
                 app = App.get_running_app()
                 app.sm.current = "MainScreen"
             except:
@@ -189,7 +200,7 @@ class Weight_Time(App):
     def build(self):
         self.sm = ScreenManager()
         self.main_screen = MainScreen(name="MainScreen")
-        self.set_weight = Set_Weight(name="Set Weight")
+        self.set_weight = SetWeight(name="Set Weight")
         self.set_time = SetTime(name="Set Time")
         self.sm.add_widget(self.main_screen)
         self.sm.add_widget(self.set_weight)
