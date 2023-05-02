@@ -11,6 +11,7 @@ from kivy.clock import Clock
 
 from datetime import datetime
 import requests
+response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/read.php")
 # from motor import *
 data = {"gearControl", 0}
 
@@ -50,7 +51,7 @@ class MainScreen(Screen):
         # print(f"'{currentTime}' current \n'{feedTime}' feeding time")
         if (not SetTime.hasFed and feedTime == currentTime):
             SetTime.hasFed = True
-            if(SetWeight.refillWeightLimit <= "weight"):
+            if(SetWeight.refillWeightLimit >= "weight"):
                 SetWeight.filling = True
                 data = {"gearControl": 1}
                 response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/write.php", params = data)
@@ -60,8 +61,7 @@ class MainScreen(Screen):
             
 
     def checkWeight(self, weightLimit):
-        print(weightLimit)
-        if (not SetWeight.filling and weightLimit == "weight"):
+        if (SetWeight.filling and weightLimit == "weight"):
             SetWeight.filling = False
             data = {"gearControl": 2}
             response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/write.php", params = data)
