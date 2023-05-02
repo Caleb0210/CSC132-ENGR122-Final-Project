@@ -51,11 +51,14 @@ class MainScreen(Screen):
         # print(f"'{currentTime}' current \n'{feedTime}' feeding time")
         if (not SetTime.hasFed and feedTime == currentTime):
             SetTime.hasFed = True
+            '''
             if(SetWeight.refillWeightLimit >= "weight"):
                 SetWeight.filling = True
                 data = {"gearControl": 1}
                 response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/write.php", params = data)
                 print("feeding now!")
+            '''
+            print("feeding now!")
         if (SetTime.hasFed and feedTime != currentTime):
             SetTime.hasFed == False
             
