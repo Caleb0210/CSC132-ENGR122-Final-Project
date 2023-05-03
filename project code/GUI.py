@@ -52,7 +52,8 @@ class MainScreen(Screen):
         if (not SetTime.hasFed and feedTime == currentTime):
             SetTime.hasFed = True
             '''
-            if(SetWeight.refillWeightLimit >= "weight"):
+            reading = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/read.php")
+            if(SetWeight.refillWeightLimit <= reading):
                 SetWeight.filling = True
                 data = {"gearControl": 1}
                 response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/write.php", params = data)
