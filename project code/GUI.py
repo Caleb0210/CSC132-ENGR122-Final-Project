@@ -11,7 +11,7 @@ from kivy.clock import Clock
 
 from datetime import datetime
 import requests
-response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/read.php")
+# response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/read.php")
 # from motor import *
 data = {"gearControl", 0}
 
@@ -42,7 +42,7 @@ class MainScreen(Screen):
 
         self.add_widget(self.layout)
 
-        Clock.schedule_interval(lambda dt: self.checkWeight(SetWeight.refillWeightLimit), 1)
+        # Clock.schedule_interval(lambda dt: self.checkWeight(SetWeight.refillWeightLimit), 1)
         Clock.schedule_interval(lambda dt: self.checkTime(SetTime.feedTime), 1)
 
     #checks the current real world time
@@ -53,12 +53,16 @@ class MainScreen(Screen):
             SetTime.hasFed = True
             '''
             reading = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/read.php")
-            if(SetWeight.refillWeightLimit <= reading):
-                SetWeight.filling = True
-                data = {"gearControl": 1}
-                response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/write.php", params = data)
-                print("feeding now!")
+            command = reading[0]
+            if (command == 'g'):
+                weight = reading[1:]
+            elif (command == 'm'):
+                motorCmd = reading[1]
             '''
+            SetWeight.filling = True
+            data = {"gearControl": "m1"}
+            response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/write.php", params = data)
+            print(response.text)
             print("feeding now!")
         if (SetTime.hasFed and feedTime != currentTime):
             SetTime.hasFed == False
@@ -186,6 +190,8 @@ class SetWeight(Screen):
                 else:
                     self.display.text = SetWeight.refillWeightLimit
                 # switch back to MainScreen if the result is valid
+                data = {"gearControl": "g" + SetWeight.refillWeightLimit}
+                response = requests.get("https://www.protohacks.net/LATech/AutomaticFeeder/write.php", params = data)
                 SetWeight.filling = False
                 app = App.get_running_app()
                 app.sm.current = "MainScreen"
